@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+  html, body {
+    background: transparent;
+    color: #e9eaee;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
+    font-size: 12px;
+    height: 100%;
+    overflow: hidden;
+    font-variant-numeric: tabular-nums;
+  }
+  #wrap {
+    display: flex;
+    align-items: center;
+    height: calc(100% - 4px);
+    margin: 2px;
+    padding: 0 14px;
+    background:
+      radial-gradient(circle at 3% 50%, rgba(63, 185, 132, 0.28), transparent 30%),
+      radial-gradient(circle at 97% 50%, rgba(155, 85, 255, 0.28), transparent 33%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05) 46%, rgba(0, 0, 0, 0.22)),
+      rgba(14, 16, 20, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 2px 14px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    gap: 0;
+    cursor: move;
+    user-select: none;
+    -webkit-user-select: none;
+    overflow: hidden;
+  }
+  .seg {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    padding: 0 10px;
+  }
+  .seg + .seg { border-left: 1px solid rgba(255,255,255,0.1); }
+  .icon { opacity: 0.72; font-size: 11px; }
+  .label { opacity: 0.55; font-size: 11px; }
+  .value { font-weight: 600; font-size: 12px; }
+  .model .value { color: #7fb8ff; }
+  .session .value { color: #e9eaee; }
+  .turn .value { color: #b8a8ff; }
+  .ctx .value { color: #4ade80; }
+  .ctx.warn .value { color: #f0b429; }
+  .ctx.danger .value { color: #ff6b6b; }
+  .tools .value { color: #7bd4a8; }
+  .tools .fail { color: #ff6b6b; font-weight: 700; margin-left: 4px; }
+  .today .value { color: #ffce70; }
+  .thread-title .value { color: #9aa3ad; font-weight: 500; }
+  .rate .value { color: #8b949e; }
+  .rate.mid .value { color: #4ade80; }
+  .rate.fast .value { color: #7fb8ff; }
+  .rate.vfast .value { color: #b8a8ff; }
+  .empty { opacity: 0.5; font-size: 11px; }
+  .ctxbar {
+    display: inline-block;
+    width: 44px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-left: 2px;
+    vertical-align: middle;
+  }
+  .ctxbar > span {
+    display: block;
+    height: 100%;
+    background: #4ade80;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+  .ctx.warn .ctxbar > span { background: #f0b429; }
+  .ctx.danger .ctxbar > span { background: #ff6b6b; }
+  .cal { vertical-align: -1px; display: inline-block; }
+  #resizeHandle {
+    position: absolute;
+    right: 4px;
+    bottom: 4px;
+    width: 14px;
+    height: 10px;
+    opacity: 0.3;
+    cursor: nwse-resize;
+    -webkit-app-region: no-drag;
+    background:
+      linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.5) 55%, transparent 55%, transparent 65%, rgba(255,255,255,0.5) 65%, rgba(255,255,255,0.5) 70%, transparent 70%, transparent 80%, rgba(255,255,255,0.5) 80%, rgba(255,255,255,0.5) 85%, transparent 85%);
+    transition: opacity 0.2s ease;
+  }
+  #wrap:hover #resizeHandle { opacity: 0.7; }
+</style>
+</head>
+<body>
+<div id="wrap"><span class="empty">等待 Codex 会话数据…</span></div>
+<div id="resizeHandle" title="拖动调整显示长度"></div>
+<script>
+const wrap = document.getElementById("wrap");
+const resizeHandle = document.getElementById("resizeHandle");
+
+function seg(cls, label, value) {
+  return `<span class="seg ${cls||""}"><span class="label">${label}</span><span class="value">${value}</span></span>`;
+}
+
+function ctxSeg(pct) {
+  let tier = "ctx";
+  if (pct >= 85) tier += " danger";
+  else if (pct >= 60) tier += " warn";
+  const fill = Math.min(100, pct).toFixed(1);
+  return `<span class="seg ${tier}"><span class="icon">▓</span><span class="label">上下文</span><span class="value">${pct.toFixed(1)}%</span><span class="ctxbar"><span style="width:${fill}%"></span></span></span>`;
+}
+
+function render(d) {
+  const show = d.show || {};
+  if (d.empty) {
+    wrap.innerHTML = '<span class="empty">今日暂无 Codex 会话</span>';
+    return;
+  }
+  let html = "";
+  if (d.threadTitle) {
+    html += `<span class="seg thread-title"><span class="icon">▤</span><span class="value">${d.threadTitle.slice(0, 18)}</span></span>`;
+  }
+  if (show.rate && d.turnRateFmt) {
+    const r = parseFloat(d.turnRateFmt);
+    let tier = "rate";
+    if (r >= 120) tier += " vfast";
+    else if (r >= 60) tier += " fast";
+    else if (r >= 25) tier += " mid";
+    html += `<span class="seg ${tier}"><span class="icon">⚡</span><span class="value">${d.turnRateFmt} t/s</span></span>`;
+  }
+  if (show.model && d.model) html += seg("model", "◉", d.model);
+  if (show.session) html += seg("session", "Σ 会话", d.sessionTotalFmt);
+  if (show.turn) html += seg("turn", "↻ 本轮", d.turnTokensFmt);
+  if (show.ctx && d.contextWindow) html += ctxSeg(100 * d.contextUsed / d.contextWindow);
+  if (show.tools) {
+    const failBadge = d.toolFailures ? `<span class="fail">●${d.toolFailures}</span>` : "";
+    html += `<span class="seg tools"><span class="icon">⚙</span><span class="label">工具</span><span class="value">${d.toolCalls}</span>${failBadge}</span>`;
+  }
+  if (show.today) {
+    const today = new Date();
+    const day = today.getDate();
+    const cal = `<svg class="cal" viewBox="0 0 24 24" width="13" height="13">
+      <rect x="1" y="1" width="22" height="22" rx="4" fill="#f6f7f9" stroke="#c9ccd1" stroke-width="1.5"/>
+      <rect x="1" y="1" width="22" height="8" rx="4" fill="#ff5c5c"/>
+      <rect x="1" y="5" width="22" height="4" fill="#ff5c5c"/>
+      <text x="12" y="19" text-anchor="middle" font-size="11" font-weight="600" fill="#2a2c33" font-family="-apple-system, BlinkMacSystemFont, sans-serif">${day}</text>
+    </svg>`;
+    html += `<span class="seg today"><span class="icon">${cal}</span><span class="label">今日</span><span class="value">${d.todaySumFmt}</span></span>`;
+  }
+  wrap.innerHTML = html;
+  // resize handle 要保持在 wrap 之外（因为 wrap 有 overflow:hidden），重新 append 到 body
+  document.body.appendChild(resizeHandle);
+}
+
+// 拖动右下角 resize handle 调整显示长度
+let resizing = false;
+resizeHandle.addEventListener("mousedown", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  resizing = true;
+  // 通知 main 进入自由位置模式（用户开始自定义布局）
+  window.codexStatusbar.setFree();
+  const startCursor = { x: e.screenX, y: e.screenY };
+  // 获取当前尺寸（从 wrap 读取）
+  const rect = wrap.getBoundingClientRect();
+  const startSize = { w: rect.width, h: rect.height };
+  const onMove = (ev) => {
+    if (!resizing) return;
+    const dw = ev.screenX - startCursor.x;
+    const dh = ev.screenY - startCursor.y;
+    window.codexStatusbar.resize(startSize.w + dw, startSize.h + dh);
+  };
+  const onUp = () => {
+    resizing = false;
+    window.removeEventListener("mousemove", onMove);
+    window.removeEventListener("mouseup", onUp);
+  };
+  window.addEventListener("mousemove", onMove);
+  window.addEventListener("mouseup", onUp);
+});
+
+// 拖动窗口：mousedown 在状态栏任意位置，mousemove 更新位置，mouseup 结束
+let dragging = false;
+wrap.addEventListener("mousedown", async (e) => {
+  if (resizing) return;
+  dragging = true;
+  window.codexStatusbar.setFree();
+  const startCursor = { x: e.screenX, y: e.screenY };
+  const winBounds = await window.codexStatusbar.getBounds();
+  const startWin = { x: winBounds.x, y: winBounds.y };
+  const onMove = (ev) => {
+    if (!dragging) return;
+    const dx = ev.screenX - startCursor.x;
+    const dy = ev.screenY - startCursor.y;
+    window.codexStatusbar.moveTo(startWin.x + dx, startWin.y + dy);
+  };
+  const onUp = () => {
+    dragging = false;
+    window.removeEventListener("mousemove", onMove);
+    window.removeEventListener("mouseup", onUp);
+  };
+  window.addEventListener("mousemove", onMove);
+  window.addEventListener("mouseup", onUp);
+});
+
+window.codexStatusbar.onData(render);
+</script>
+</body>
+</html>

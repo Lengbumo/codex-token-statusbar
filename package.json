@@ -1,0 +1,56 @@
+{
+  "name": "codex-token-statusbar",
+  "version": "0.1.0",
+  "description": "Codex 桌面端 token 用量状态栏（独立置顶窗口）",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:mac": "bash build-mac.sh",
+    "package:mac": "bash package.sh 1",
+    "package:win": "bash package.sh 2"
+  },
+  "devDependencies": {
+    "electron": "44.4.3",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "com.lengbumo.codex-statusbar",
+    "productName": "codex-token-statusbar",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.html",
+      "tray-icon.png",
+      "package.json"
+    ],
+    "mac": {
+      "extendInfo": {
+        "LSUIElement": true
+      },
+      "identity": null,
+      "target": [
+        {
+          "target": "dir",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icon.icns"
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "dir",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
+  }
+}

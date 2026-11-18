@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.app
+*-win64/
+*-win64.zip
+.DS_Store
+bar_status.png
+*.log
