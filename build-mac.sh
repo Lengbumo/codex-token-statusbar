@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 打包 codex-token-statusbar.app，并把产物移动到当前源码目录
-# 用法：cd codex-statusbar-overlay && ./build-mac.sh
+# 用法：cd codex-token-statusbar && ./build-mac.sh
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
