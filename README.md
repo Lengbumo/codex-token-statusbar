@@ -27,7 +27,13 @@
 
 ## AI 安装与启动
 
-把下面内容交给 AI 执行即可：
+把下面这句话发给你的 AI 即可：
+
+```text
+帮我安装 https://github.com/Lengbumo/codex-token-statusbar.git 的 Codex 状态栏插件，安装完成后启动它。
+```
+
+AI 拿到这句话后，按仓库 README 执行：
 
 ```bash
 git clone https://github.com/Lengbumo/codex-token-statusbar.git
