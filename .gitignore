@@ -6,3 +6,5 @@ dist/
 .DS_Store
 bar_status.png
 *.log
+
+.idea/
