@@ -2,13 +2,12 @@
 
 一个独立运行的 Codex token 用量状态栏。它只读取 `~/.codex/sessions` 和 `~/.codex/state_5.sqlite`，不修改 Codex 本体，也不会写入会话数据。
 
-## 预览
-
 ![预览](docs/images/preview.png)
 
 ## 能力
 
 - 独立悬浮在 Codex / ChatGPT 主窗口右上角
+- 支持拖拽与自定义显示大小和显示指标
 - 实时显示模型、token 消耗、上下文占用、工具调用等信息
 - 支持从菜单栏图标显示 / 隐藏状态栏
 - 右键菜单可选择对话、开关显示项、退出程序
@@ -28,18 +27,13 @@
 
 ## AI 安装与启动
 
-如果你是 AI 助手，并且可以访问这个目录，直接执行：
+把下面内容交给 AI 执行即可：
 
 ```bash
-cd /Users/lengbumo/work/project/AI/codex-token-statusbar
+git clone https://github.com/Lengbumo/codex-token-statusbar.git
+cd codex-token-statusbar
 npm install
 npm start
-```
-
-如果要启动已打包好的 macOS 应用：
-
-```bash
-open /Users/lengbumo/work/project/AI/codex-token-statusbar/codex-token-statusbar.app
 ```
 
 ## 手动安装与启动
@@ -47,7 +41,7 @@ open /Users/lengbumo/work/project/AI/codex-token-statusbar/codex-token-statusbar
 ### 从源码启动
 
 ```bash
-cd /Users/lengbumo/work/project/AI/codex-token-statusbar
+cd ~/codex-token-statusbar
 npm install
 npm start
 ```
